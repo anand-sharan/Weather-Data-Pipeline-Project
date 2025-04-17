@@ -17,28 +17,28 @@ The pipeline consists of the following components:
 ```mermaid
 flowchart TD
     %% Data Source
-    API[Open Meteo API] :::dataSource
+    API[Open Meteo API]
     
     %% Data Collection
-    LAMBDA[Lambda Function] :::processing
-    FIREHOSE[Kinesis Firehose] :::processing
+    LAMBDA[Lambda Function]
+    FIREHOSE[Kinesis Firehose]
     
     %% Data Storage
-    S3_RAW[S3 Raw Data] :::storage
-    S3_TRANSFORM[S3 Transformed Data] :::storage
-    S3_PROD[S3 Production Data] :::storage
+    S3_RAW[S3 Raw Data]
+    S3_TRANSFORM[S3 Transformed Data]
+    S3_PROD[S3 Production Data]
     
     %% Data Cataloging & Processing
-    CRAWLER[Glue Crawler] :::processing
-    CATALOG[Glue Data Catalog] :::analytics
-    DEL_JOB[Delete Job] :::processing
-    CREATE_JOB[Create Job] :::processing
-    DQ_JOB[DQ Check Job] :::processing
-    PUBLISH_JOB[Publish Job] :::processing
+    CRAWLER[Glue Crawler]
+    CATALOG[Glue Data Catalog]
+    DEL_JOB[Delete Job]
+    CREATE_JOB[Create Job]
+    DQ_JOB[DQ Check Job]
+    PUBLISH_JOB[Publish Job]
     
     %% Data Analysis & Visualization
-    ATHENA[Amazon Athena] :::analytics
-    GRAFANA[Grafana Dashboard] :::visualization
+    ATHENA[Amazon Athena]
+    GRAFANA[Grafana Dashboard]
     
     %% Connections with 90-degree angles
     API --> LAMBDA
@@ -66,6 +66,13 @@ flowchart TD
     classDef storage fill:#2ecc71,stroke:#27ae60,stroke-width:2px,color:white
     classDef analytics fill:#9b59b6,stroke:#8e44ad,stroke-width:2px,color:white
     classDef visualization fill:#f39c12,stroke:#d35400,stroke-width:2px,color:white
+    
+    %% Apply classes
+    class API dataSource
+    class LAMBDA,FIREHOSE,CRAWLER,DEL_JOB,CREATE_JOB,DQ_JOB,PUBLISH_JOB processing
+    class S3_RAW,S3_TRANSFORM,S3_PROD storage
+    class CATALOG,ATHENA analytics
+    class GRAFANA visualization
     
     %% Add labels
     subgraph "Data Source"
