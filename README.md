@@ -14,6 +14,12 @@ The pipeline consists of the following components:
 6. **Production Data**: Final transformation creates a production-ready dataset
 7. **Data Visualization**: Grafana dashboard visualizes temperature trends
 
+### Architecture Diagram
+
+![Architecture Diagram](pics/architecture_diagram.png)
+
+### Flowchart
+
 ```mermaid
 flowchart TD
     %% Data Source
