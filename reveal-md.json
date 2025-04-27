@@ -1,0 +1,8 @@
+{
+    "theme": "night",
+    "highlightTheme": "monokai",
+    "css": "custom.css",
+    "separator": "^---",
+    "verticalSeparator": "^----",
+    "title": "Weather Data Pipeline Project"
+  }
