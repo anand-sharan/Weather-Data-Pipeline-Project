@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Weather Data Pipeline Architecture</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+        
+        .diagram {
+            width: 100%;
+            height: 800px;
+            overflow: auto;
+            position: relative;
+            border: 1px solid #ddd;
+        }
+        
+        .diagram-container {
+            min-width: 1500px;
+            min-height: 800px;
+            position: relative;
+        }
+        
+        svg {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .node {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .node:hover {
+            filter: brightness(1.1);
+        }
+        
+        .node rect {
+            rx: 6;
+            ry: 6;
+            stroke-width: 2px;
+        }
+        
+        .data-source rect {
+            fill: #3498db;
+            stroke: #2980b9;
+        }
+        
+        .processing rect {
+            fill: #e74c3c;
+            stroke: #c0392b;
+        }
+        
+        .storage rect {
+            fill: #2ecc71;
+            stroke: #27ae60;
+        }
+        
+        .analytics rect {
+            fill: #9b59b6;
+            stroke: #8e44ad;
+        }
+        
+        .visualization rect {
+            fill: #f39c12;
+            stroke: #d35400;
+        }
+        
+        .node text {
+            fill: white;
+            font-weight: 500;
+            text-anchor: middle;
+            dominant-baseline: middle;
+            font-size: 14px;
+            pointer-events: none;
+        }
+        
+        .node-details {
+            fill: white;
+            font-size: 10px;
+            text-anchor: middle;
+            dominant-baseline: middle;
+            pointer-events: none;
+            font-family: 'Consolas', monospace;
+            letter-spacing: -0.2px;
+        }
+        
+        .link {
+            fill: none;
+            stroke: #95a5a6;
+            stroke-width: 2px;
+            marker-end: url(#arrowhead);
+        }
+        
+        .link.data-flow {
+            stroke-dasharray: 5, 5;
+            stroke: #34495e;
+        }
+        
+        .tooltip {
+            position: absolute;
+            padding: 10px;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            border-radius: 4px;
+            pointer-events: none;
+            max-width: 300px;
+            z-index: 10;
+            transition: opacity 0.3s;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        .phase-indicator {
+            font-size: 16px;
+            font-weight: bold;
+            fill: #2c3e50;
+        }
+        
+        .pipeline-phase {
+            fill: rgba(0,0,0,0.03);
+            stroke: #ddd;
+            stroke-width: 1px;
+            rx: 10;
+            ry: 10;
+        }
+        
+        .legend {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-right: 20px;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            margin-right: 8px;
+            border-radius: 4px;
+        }
+        
+        .arrow-legend {
+            margin-top: 5px;
+        }
+        
+        .file-info {
+            margin-top: 30px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        
+        .file-info h2 {
+            color: #2c3e50;
+            margin-top: 0;
+            font-size: 18px;
+        }
+        
+        .file-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .file-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 15px;
+        }
+        
+        .file-card h3 {
+            margin-top: 0;
+            color: #3498db;
+            font-size: 16px;
+        }
+        
+        .file-card p {
+            margin: 0;
+            font-size: 14px;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Enhanced Weather Data Pipeline Architecture</h1>
+        <div class="diagram" id="pipeline-diagram">
+            <div class="diagram-container"></div>
+        </div>
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #3498db;"></div>
+                <span>Data Source</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #e74c3c;"></div>
+                <span>Processing</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #2ecc71;"></div>
+                <span>Storage</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #9b59b6;"></div>
+                <span>Analytics</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #f39c12;"></div>
+                <span>Visualization</span>
+            </div>
+            <div class="legend-item arrow-legend">
+                <svg width="60" height="20">
+                    <line x1="5" y1="10" x2="40" y2="10" stroke="#95a5a6" stroke-width="2" marker-end="url(#arrowhead)"></line>
+                </svg>
+                <span>Data Flow</span>
+            </div>
+            <div class="legend-item arrow-legend">
+                <svg width="60" height="20">
+                    <line x1="5" y1="10" x2="40" y2="10" stroke="#34495e" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrowhead)"></line>
+                </svg>
+                <span>Transformation</span>
+            </div>
+        </div>
+        
+        <div class="file-info">
+            <h2>Key Resources</h2>
+            <div class="file-info-grid">
+                <div class="file-card">
+                    <h3>S3 Buckets</h3>
+                    <p><strong>Raw & Transformed Data:</strong> open-meteo-weather-data-parquet-bucket-04142025</p>
+                    <p><strong>Production Data:</strong> parquet-weather-table-prod-04142025</p>
+                    <p><strong>Query Results:</strong> query-results-location-de-proj-04152025</p>
+                </div>
+                <div class="file-card">
+                    <h3>Database & Tables</h3>
+                    <p><strong>Database:</strong> weather-database-04142025</p>
+                    <p><strong>Source Table:</strong> weather_open_meteo_weather_data_parquet_bucket_04142025</p>
+                    <p><strong>Transformed Table:</strong> open_meteo_weather_data_parquet_tbl</p>
+                    <p><strong>Production Table:</strong> open_meteo_weather_data_parquet_tbl_PROD</p>
+                </div>
+                <div class="file-card">
+                    <h3>Lambda Function</h3>
+                    <p><strong>Name:</strong> historical_weather_data_lambda_put_record_batch</p>
+                    <p><strong>Source File:</strong> historical_weather_data_lambda_put_record_batch.py</p>
+                </div>
+                <div class="file-card">
+                    <h3>Kinesis Firehose</h3>
+                    <p><strong>Name:</strong> PUT-S3-HToZ2</p>
+                </div>
+                <div class="file-card">
+                    <h3>Processing Jobs</h3>
+                    <p><strong>Delete Job:</strong> delete_parquet_weather_table_s3_athena.py</p>
+                    <p><strong>Create Job:</strong> create_parquet_weather_table_glue_job.py</p>
+                    <p><strong>DQ Check Job:</strong> dq_checks_parquet_weather_table.py</p>
+                    <p><strong>Publish Job:</strong> publish_prod_parquet_weather_table.py</p>
+                </div>
+                <div class="file-card">
+                    <h3>Athena Query</h3>
+                    <p><strong>File:</strong> query_athena_grafana.sql</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Select diagram container and set minimum dimensions
+            const diagramContainer = document.querySelector('.diagram-container');
+            diagramContainer.style.width = '1500px';
+            diagramContainer.style.height = '800px';
+            
+            // Define the pipeline phases in order
+            const phasesOrder = [
+                'Data Source',
+                'Data Collection',
+                'Data Storage',
+                'Data Cataloging',
+                'Data Processing',
+                'Data Analysis',
+                'Data Visualization'
+            ];
+            
+            // Define the pipeline nodes with specific ordering and detailed information
+            const nodes = [
+                // Data Sources
+                { id: 'api', label: 'Open Meteo API', phase: 'Data Source', order: 0, type: 'data-source', 
+                  description: 'Weather data API providing historical temperature data from Jan-Apr 2025.',
+                  details: 'Latitude: 40.7143, Longitude: -74.006' },
+                
+                // Processing - Data Collection
+                { id: 'lambda', label: 'Lambda Function', phase: 'Data Collection', order: 0, type: 'processing', 
+                  description: 'AWS Lambda function fetches data from Open Meteo API and sends to Kinesis Firehose.',
+                  details: 'historical_weather_data_lambda' },
+                { id: 'firehose', label: 'Kinesis Firehose', phase: 'Data Collection', order: 1, type: 'processing', 
+                  description: 'Delivers raw weather data to S3 in JSON format with buffering and batching.',
+                  details: 'PUT-S3-HToZ2' },
+                
+                // Storage
+                { id: 's3-raw', label: 'S3 Raw Data', phase: 'Data Storage', order: 0, type: 'storage', 
+                  description: 'Raw JSON weather data storage in S3 bucket.',
+                  details: 'open-meteo-weather-data-parquet' },
+                { id: 's3-transformed', label: 'S3 Transformed Data', phase: 'Data Storage', order: 1, type: 'storage', 
+                  description: 'Parquet format data with added temperature conversions.',
+                  details: 'transformed_data' },
+                { id: 's3-prod', label: 'S3 Production Data', phase: 'Data Storage', order: 2, type: 'storage', 
+                  description: 'Production-ready data storage in S3 bucket.',
+                  details: 'parquet-weather-table-prod' },
+                
+                // Processing & Analytics - Data Cataloging
+                { id: 'glue-crawler', label: 'Glue Crawler', phase: 'Data Cataloging', order: 0, type: 'processing', 
+                  description: 'Catalogs data in the AWS Glue Data Catalog for querying.',
+                  details: 'weather-data-crawler' },
+                { id: 'glue-catalog', label: 'Glue Data Catalog', phase: 'Data Cataloging', order: 1, type: 'analytics', 
+                  description: 'Metadata repository containing schema information for the weather data tables.',
+                  details: 'weather-database-04142025' },
+                
+                // Data Processing
+                { id: 'delete-job', label: 'Delete Job', phase: 'Data Processing', order: 0, type: 'processing', 
+                  description: 'Cleans up previous data and tables before transformation.',
+                  details: 'delete_parquet_weather_table' },
+                { id: 'create-job', label: 'Create Job', phase: 'Data Processing', order: 1, type: 'processing', 
+                  description: 'Transforms raw data and adds calculated fields such as temperature in Celsius.',
+                  details: 'create_parquet_weather_table' },
+                { id: 'dq-job', label: 'DQ Check Job', phase: 'Data Processing', order: 2, type: 'processing', 
+                  description: 'Validates data quality by checking for NULL values.',
+                  details: 'dq_checks_parquet_weather' },
+                { id: 'publish-job', label: 'Publish Job', phase: 'Data Processing', order: 3, type: 'processing', 
+                  description: 'Creates the production-ready dataset for final use.',
+                  details: 'publish_prod_parquet_weather' },
+                
+                // Analytics - Data Analysis
+                { id: 'athena', label: 'Amazon Athena', phase: 'Data Analysis', order: 0, type: 'analytics', 
+                  description: 'Allows querying of the weather data using standard SQL.',
+                  details: 'query_athena_grafana.sql' },
+                
+                // Visualization
+                { id: 'grafana', label: 'Grafana Dashboard', phase: 'Data Visualization', order: 0, type: 'visualization', 
+                  description: 'Interactive dashboard visualizing temperature trends over time.',
+                  details: 'New Open Meteo Weather Data Viz' }
+            ];
+            
+            // Define links between nodes
+            const links = [
+                { source: 'api', target: 'lambda', type: 'normal' },
+                { source: 'lambda', target: 'firehose', type: 'normal' },
+                { source: 'firehose', target: 's3-raw', type: 'normal' },
+                { source: 's3-raw', target: 'glue-crawler', type: 'normal' },
+                { source: 'glue-crawler', target: 'glue-catalog', type: 'normal' },
+                { source: 'glue-catalog', target: 'delete-job', type: 'normal' },
+                { source: 'delete-job', target: 'create-job', type: 'normal' },
+                { source: 'create-job', target: 's3-transformed', type: 'data-flow' },
+                { source: 's3-transformed', target: 'dq-job', type: 'normal' },
+                { source: 'dq-job', target: 'publish-job', type: 'normal' },
+                { source: 'publish-job', target: 's3-prod', type: 'data-flow' },
+                { source: 's3-prod', target: 'athena', type: 'normal' },
+                { source: 'athena', target: 'grafana', type: 'normal' }
+            ];
+            
+            // Set up the SVG diagram
+            const svg = d3.select(".diagram-container")
+                .append("svg")
+                .attr("width", "100%")
+                .attr("height", "100%");
+                
+            // Add arrow marker definition
+            svg.append("defs").append("marker")
+                .attr("id", "arrowhead")
+                .attr("viewBox", "0 -5 10 10")
+                .attr("refX", 8)
+                .attr("refY", 0)
+                .attr("orient", "auto")
+                .attr("markerWidth", 6)
+                .attr("markerHeight", 6)
+                .append("path")
+                .attr("d", "M0,-5L10,0L0,5")
+                .attr("fill", "#95a5a6");
+            
+            // Calculate node positions
+            const width = 1500;
+            const height = 800;
+            const nodeWidth = 180;
+            const nodeHeight = 70;
+            
+            // Filter out phases we're actually using
+            const phases = phasesOrder.filter(phase => nodes.some(node => node.phase === phase));
+            
+            // Calculate phase widths and positions
+            const phaseWidth = width / phases.length;
+            
+            // Draw phase backgrounds
+            const phaseGroups = {};
+            phases.forEach((phase, i) => {
+                const phaseGroup = svg.append("g")
+                    .attr("class", "phase-group");
+                
+                phaseGroup.append("rect")
+                    .attr("class", "pipeline-phase")
+                    .attr("x", i * phaseWidth + 15)
+                    .attr("y", 20)
+                    .attr("width", phaseWidth - 30)
+                    .attr("height", height - 40);
+                
+                phaseGroup.append("text")
+                    .attr("class", "phase-indicator")
+                    .attr("x", i * phaseWidth + phaseWidth / 2)
+                    .attr("y", 40)
+                    .attr("text-anchor", "middle")
+                    .text(phase);
+                
+                phaseGroups[phase] = phaseGroup;
+            });
+            
+            // Position nodes in their phases - centered in columns
+            nodes.forEach(node => {
+                const phaseIndex = phases.indexOf(node.phase);
+                const phaseNodes = nodes.filter(n => n.phase === node.phase);
+                
+                // Calculate total height needed for all nodes in this phase
+                const totalNodesHeight = phaseNodes.length * nodeHeight + (phaseNodes.length - 1) * 50; // 50px gap between nodes
+                const startY = (height - totalNodesHeight) / 2 + 30; // Increased padding from top
+                
+                // Position based on the node's order within its phase
+                node.x = phaseIndex * phaseWidth + (phaseWidth - nodeWidth) / 2; // Center in column
+                node.y = startY + node.order * (nodeHeight + 50);
+            });
+            
+            // Create tooltip div
+            const tooltip = d3.select("body").append("div")
+                .attr("class", "tooltip")
+                .style("opacity", 0);
+            
+            // Draw the links with orthogonal (90-degree) paths
+            const linkElements = svg.selectAll(".link")
+                .data(links)
+                .enter()
+                .append("path")
+                .attr("class", d => d.type === 'data-flow' ? "link data-flow" : "link")
+                .attr("d", d => {
+                    const sourceNode = nodes.find(n => n.id === d.source);
+                    const targetNode = nodes.find(n => n.id === d.target);
+                    
+                    // Calculate connection points
+                    const sourcePhaseIndex = phases.indexOf(sourceNode.phase);
+                    const targetPhaseIndex = phases.indexOf(targetNode.phase);
+                    
+            // Special handling for specific connections
+                    // 1. Connection from Create Job to S3 Transformed Data
+                    if (d.source === 'create-job' && d.target === 's3-transformed') {
+                        const x1 = sourceNode.x + nodeWidth / 2;
+                        const y1 = sourceNode.y + nodeHeight;
+                        const x2 = targetNode.x + nodeWidth / 2;
+                        const y2 = targetNode.y;
+                        // Create a path that goes from Create Job down, then left, then up to S3 Transformed Data
+                        const verticalOffset = 25;
+                        return `M${x1},${y1} V${y1 + verticalOffset} H${x2} V${y2}`;
+                    }
+                    // 2. Connection from Publish Job to S3 Production Data
+                    else if (d.source === 'publish-job' && d.target === 's3-prod') {
+                        const x1 = sourceNode.x;
+                        const y1 = sourceNode.y + nodeHeight / 2;
+                        const x2 = targetNode.x + nodeWidth;
+                        const y2 = targetNode.y + nodeHeight / 2;
+                        // Create a path that goes from Publish Job left, then up, then right to S3 Production Data
+                        const horizontalOffset = 50;
+                        return `M${x1},${y1} H${x1 - horizontalOffset} V${y2} H${x2}`;
+                    }
+                    // Default cases
+                    let x1, y1, x2, y2;
+                    
+                    // If nodes are in the same phase, connect from bottom to top
+                    if (sourceNode.phase === targetNode.phase) {
+                        x1 = sourceNode.x + nodeWidth / 2;
+                        y1 = sourceNode.y + nodeHeight;
+                        x2 = targetNode.x + nodeWidth / 2;
+                        y2 = targetNode.y;
+                        
+                        // Create orthogonal path with 90-degree angles
+                        const midY = y1 + (y2 - y1) / 2;
+                        return `M${x1},${y1} V${midY} H${x2} V${y2}`;
+                    }
+                    // If target node is in the next phase, connect from right to left
+                    else if (targetPhaseIndex === sourcePhaseIndex + 1) {
+                        x1 = sourceNode.x + nodeWidth;
+                        y1 = sourceNode.y + nodeHeight / 2;
+                        x2 = targetNode.x;
+                        y2 = targetNode.y + nodeHeight / 2;
+                        
+                        // Create orthogonal path with 90-degree angles
+                        const midX = (x1 + x2) / 2;
+                        return `M${x1},${y1} H${midX} V${y2} H${x2}`;
+                    }
+                    // Handle other cases (nodes in non-adjacent phases)
+                    else {
+                        x1 = sourceNode.x + nodeWidth;
+                        y1 = sourceNode.y + nodeHeight / 2;
+                        x2 = targetNode.x;
+                        y2 = targetNode.y + nodeHeight / 2;
+                        
+                        // Create orthogonal path with multiple segments if needed
+                        const segments = [];
+                        segments.push(`M${x1},${y1}`);
+                        
+                        // Calculate intermediate points for phases in between
+                        for (let i = sourcePhaseIndex + 1; i < targetPhaseIndex; i++) {
+                            const midX = i * phaseWidth + phaseWidth / 2;
+                            segments.push(`H${midX}`);
+                            segments.push(`V${y2}`);
+                        }
+                        
+                        segments.push(`H${x2}`);
+                        return segments.join(' ');
+                    }
+                });
+            
+            // Draw the nodes
+            const nodeGroups = svg.selectAll(".node")
+                .data(nodes)
+                .enter()
+                .append("g")
+                .attr("class", d => `node ${d.type}`)
+                .attr("transform", d => `translate(${d.x}, ${d.y})`)
+                .on("mouseover", function(event, d) {
+                    tooltip.transition()
+                        .duration(200)
+                        .style("opacity", .9);
+                    tooltip.html(`<strong>${d.label}</strong><br>${d.description}<br><em>${d.details}</em>`)
+                        .style("left", (event.pageX + 10) + "px")
+                        .style("top", (event.pageY - 28) + "px");
+                })
+                .on("mouseout", function() {
+                    tooltip.transition()
+                        .duration(500)
+                        .style("opacity", 0);
+                });
+            
+            nodeGroups.append("rect")
+                .attr("width", nodeWidth)
+                .attr("height", nodeHeight);
+            
+            nodeGroups.append("text")
+                .attr("x", nodeWidth / 2)
+                .attr("y", nodeHeight / 3)
+                .text(d => d.label);
+                
+            nodeGroups.append("text")
+                .attr("class", "node-details")
+                .attr("x", nodeWidth / 2)
+                .attr("y", nodeHeight * 2/3)
+                .text(d => {
+                    // Truncate text for diagram display while preserving full text in tooltip
+                    const maxLength = 25;
+                    if (d.details.length > maxLength) {
+                        return d.details.substring(0, maxLength - 3) + "...";
+                    }
+                    return d.details;
+                });
+                
+            // Add grid lines (optional - for more technical look)
+            const gridLines = svg.append("g")
+                .attr("class", "grid-lines")
+                .attr("stroke", "#f0f0f0")
+                .attr("stroke-width", 1)
+                .attr("opacity", 0.3);
+                
+            // Horizontal grid lines
+            for(let i = 100; i < height; i += 100) {
+                gridLines.append("line")
+                    .attr("x1", 0)
+                    .attr("y1", i)
+                    .attr("x2", width)
+                    .attr("y2", i);
+            }
+            
+            // Vertical grid lines
+            for(let i = 100; i < width; i += 100) {
+                gridLines.append("line")
+                    .attr("x1", i)
+                    .attr("y1", 0)
+                    .attr("x2", i)
+                    .attr("y2", height);
+            }
+        });
+    </script>
+</body>
+</html>
