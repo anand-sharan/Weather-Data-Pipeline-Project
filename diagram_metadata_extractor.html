@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enhanced Weather Data Pipeline Architecture</title>
+    <title>Weather Metadata Extractor Architecture</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <style>
         body {
@@ -87,6 +87,16 @@
         .visualization rect {
             fill: #f39c12;
             stroke: #d35400;
+        }
+        
+        .trigger rect {
+            fill: #ff7f0e; 
+            stroke: #e67e22;
+        }
+        
+        .metadata rect {
+            fill: #1abc9c;
+            stroke: #16a085;
         }
         
         .node text {
@@ -215,7 +225,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Enhanced Weather Data Pipeline Architecture</h1>
+        <h1>Weather Metadata Extractor Architecture</h1>
         <div class="diagram" id="pipeline-diagram">
             <div class="diagram-container"></div>
         </div>
@@ -240,6 +250,14 @@
                 <div class="legend-color" style="background-color: #f39c12;"></div>
                 <span>Visualization</span>
             </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #ff7f0e;"></div>
+                <span>Trigger</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #1abc9c;"></div>
+                <span>Metadata</span>
+            </div>
             <div class="legend-item arrow-legend">
                 <svg width="60" height="20">
                     <line x1="5" y1="10" x2="40" y2="10" stroke="#95a5a6" stroke-width="2" marker-end="url(#arrowhead)"></line>
@@ -258,37 +276,58 @@
             <h2>Key Resources</h2>
             <div class="file-info-grid">
                 <div class="file-card">
-                    <h3>S3 Buckets</h3>
+                    <h3>S3 Buckets & Folders</h3>
                     <p><strong>Raw & Transformed Data:</strong> open-meteo-weather-data-parquet-bucket-04142025</p>
                     <p><strong>Production Data:</strong> parquet-weather-table-prod-04142025</p>
                     <p><strong>Query Results:</strong> query-results-location-de-proj-04152025</p>
+                    <p><strong>Metadata Paths:</strong> 
+                        <ul>
+                            <li>weather_metadata_flat/{table_name}/date=YYYY-MM-DD/</li>
+                            <li>weather_metadata_detailed/{table_name}/</li>
+                            <li>weather_metadata_manifests/{table_name}/</li>
+                        </ul>
+                    </p>
                 </div>
                 <div class="file-card">
                     <h3>Database & Tables</h3>
                     <p><strong>Database:</strong> weather-database-04142025</p>
                     <p><strong>Source Table:</strong> weather_open_meteo_weather_data_parquet_bucket_04142025</p>
                     <p><strong>Transformed Table:</strong> open_meteo_weather_data_parquet_tbl</p>
-                    <p><strong>Production Table:</strong> open_meteo_weather_data_parquet_tbl_PROD</p>
+                    <p><strong>Production Table:</strong> open_meteo_weather_data_parquet_tbl_PROD_2025_04_17_02_58_16_622979</p>
+                    <p><strong>Metadata Tables:</strong>
+                        <ul>
+                            <li>weather_metadata_results</li>
+                            <li>weather_metadata_flat</li>
+                            <li>weather_metadata_direct</li>
+                            <li>weather_metadata_manual</li>
+                        </ul>
+                    </p>
                 </div>
                 <div class="file-card">
-                    <h3>Lambda Function</h3>
-                    <p><strong>Name:</strong> historical_weather_data_lambda_put_record_batch</p>
-                    <p><strong>Source File:</strong> historical_weather_data_lambda_put_record_batch.py</p>
+                    <h3>Lambda Functions</h3>
+                    <p><strong>Data Collection:</strong> historical_weather_data_lambda_put_record_batch</p>
+                    <p><strong>Metadata Extraction:</strong> WeatherDataMetadataExtractor</p>
                 </div>
                 <div class="file-card">
-                    <h3>Kinesis Firehose</h3>
-                    <p><strong>Name:</strong> PUT-S3-HToZ2</p>
+                    <h3>EventBridge Triggers</h3>
+                    <p><strong>Type:</strong> CloudWatch Events</p>
+                    <p><strong>Purpose:</strong> Trigger metadata extraction after table creation/updates</p>
                 </div>
                 <div class="file-card">
-                    <h3>Processing Jobs</h3>
-                    <p><strong>Delete Job:</strong> delete_parquet_weather_table_s3_athena.py</p>
-                    <p><strong>Create Job:</strong> create_parquet_weather_table_glue_job.py</p>
-                    <p><strong>DQ Check Job:</strong> dq_checks_parquet_weather_table.py</p>
-                    <p><strong>Publish Job:</strong> publish_prod_parquet_weather_table.py</p>
+                    <h3>Metadata Process Files</h3>
+                    <p><strong>Flattened Metadata:</strong> JSON files with extraction timestamp</p>
+                    <p><strong>Manifest File:</strong> manifest.json pointing to latest metadata</p>
+                    <p><strong>Sample Files:</strong>
+                        <ul>
+                            <li>2025_04_21_22_56_36.json</li>
+                            <li>manifest.json</li>
+                        </ul>
+                    </p>
                 </div>
                 <div class="file-card">
-                    <h3>Athena Query</h3>
-                    <p><strong>File:</strong> query_athena_grafana.sql</p>
+                    <h3>Athena Queries</h3>
+                    <p><strong>Metadata Query:</strong> SELECT * FROM "weather_metadata_results"."weather_metadata_flat" LIMIT 10;</p>
+                    <p><strong>Tables:</strong> Accessed via AWS Glue Data Catalog</p>
                 </div>
             </div>
         </div>
@@ -306,8 +345,8 @@
                 'Data Source',
                 'Data Collection',
                 'Data Storage',
-                'Data Cataloging',
-                'Data Processing',
+                'Metadata Extraction',
+                'Metadata Storage',
                 'Data Analysis',
                 'Data Visualization'
             ];
@@ -338,32 +377,32 @@
                   description: 'Production-ready data storage in S3 bucket.',
                   details: 'parquet-weather-table-prod' },
                 
-                // Processing & Analytics - Data Cataloging
-                { id: 'glue-crawler', label: 'Glue Crawler', phase: 'Data Cataloging', order: 0, type: 'processing', 
-                  description: 'Catalogs data in the AWS Glue Data Catalog for querying.',
-                  details: 'weather-data-crawler' },
-                { id: 'glue-catalog', label: 'Glue Data Catalog', phase: 'Data Cataloging', order: 1, type: 'analytics', 
+                // Metadata Extraction
+                { id: 'eventbridge', label: 'EventBridge', phase: 'Metadata Extraction', order: 0, type: 'trigger', 
+                  description: 'CloudWatch Events trigger function on data updates.',
+                  details: 'CloudWatch Events' },
+                { id: 'metadata-lambda', label: 'Metadata Extractor', phase: 'Metadata Extraction', order: 1, type: 'processing', 
+                  description: 'Lambda function that queries Glue catalog and extracts metadata.',
+                  details: 'WeatherDataMetadataExtractor' },
+                
+                // Metadata Storage
+                { id: 'metadata-flat', label: 'Flattened Metadata', phase: 'Metadata Storage', order: 0, type: 'metadata', 
+                  description: 'Simplified metadata JSON for Athena querying.',
+                  details: 'weather_metadata_flat' },
+                { id: 'metadata-detailed', label: 'Detailed Metadata', phase: 'Metadata Storage', order: 1, type: 'metadata', 
+                  description: 'Complete metadata with all details and S3 object samples.',
+                  details: 'weather_metadata_detailed' },
+                { id: 'metadata-manifest', label: 'Manifest Files', phase: 'Metadata Storage', order: 2, type: 'metadata', 
+                  description: 'JSON manifest files pointing to the latest metadata.',
+                  details: 'weather_metadata_manifests' },
+                                
+                // Analytics - Data Analysis
+                { id: 'glue-catalog', label: 'Glue Data Catalog', phase: 'Data Analysis', order: 0, type: 'analytics', 
                   description: 'Metadata repository containing schema information for the weather data tables.',
                   details: 'weather-database-04142025' },
-                
-                // Data Processing
-                { id: 'delete-job', label: 'Delete Job', phase: 'Data Processing', order: 0, type: 'processing', 
-                  description: 'Cleans up previous data and tables before transformation.',
-                  details: 'delete_parquet_weather_table' },
-                { id: 'create-job', label: 'Create Job', phase: 'Data Processing', order: 1, type: 'processing', 
-                  description: 'Transforms raw data and adds calculated fields such as temperature in Celsius.',
-                  details: 'create_parquet_weather_table' },
-                { id: 'dq-job', label: 'DQ Check Job', phase: 'Data Processing', order: 2, type: 'processing', 
-                  description: 'Validates data quality by checking for NULL values.',
-                  details: 'dq_checks_parquet_weather' },
-                { id: 'publish-job', label: 'Publish Job', phase: 'Data Processing', order: 3, type: 'processing', 
-                  description: 'Creates the production-ready dataset for final use.',
-                  details: 'publish_prod_parquet_weather' },
-                
-                // Analytics - Data Analysis
-                { id: 'athena', label: 'Amazon Athena', phase: 'Data Analysis', order: 0, type: 'analytics', 
-                  description: 'Allows querying of the weather data using standard SQL.',
-                  details: 'query_athena_grafana.sql' },
+                { id: 'athena', label: 'Amazon Athena', phase: 'Data Analysis', order: 1, type: 'analytics', 
+                  description: 'Allows querying of both weather data and metadata using standard SQL.',
+                  details: 'weather_metadata_results' },
                 
                 // Visualization
                 { id: 'grafana', label: 'Grafana Dashboard', phase: 'Data Visualization', order: 0, type: 'visualization', 
@@ -376,15 +415,20 @@
                 { source: 'api', target: 'lambda', type: 'normal' },
                 { source: 'lambda', target: 'firehose', type: 'normal' },
                 { source: 'firehose', target: 's3-raw', type: 'normal' },
-                { source: 's3-raw', target: 'glue-crawler', type: 'normal' },
-                { source: 'glue-crawler', target: 'glue-catalog', type: 'normal' },
-                { source: 'glue-catalog', target: 'delete-job', type: 'normal' },
-                { source: 'delete-job', target: 'create-job', type: 'normal' },
-                { source: 'create-job', target: 's3-transformed', type: 'data-flow' },
-                { source: 's3-transformed', target: 'dq-job', type: 'normal' },
-                { source: 'dq-job', target: 'publish-job', type: 'normal' },
-                { source: 'publish-job', target: 's3-prod', type: 'data-flow' },
-                { source: 's3-prod', target: 'athena', type: 'normal' },
+                { source: 's3-raw', target: 's3-transformed', type: 'data-flow' },
+                { source: 's3-transformed', target: 's3-prod', type: 'data-flow' },
+                
+                // Metadata extraction flow
+                { source: 's3-prod', target: 'eventbridge', type: 'normal' },
+                { source: 'eventbridge', target: 'metadata-lambda', type: 'normal' },
+                { source: 'metadata-lambda', target: 'metadata-flat', type: 'data-flow' },
+                { source: 'metadata-lambda', target: 'metadata-detailed', type: 'data-flow' },
+                { source: 'metadata-lambda', target: 'metadata-manifest', type: 'data-flow' },
+                
+                // Athena and visualization flow
+                { source: 's3-prod', target: 'glue-catalog', type: 'normal' },
+                { source: 'metadata-flat', target: 'glue-catalog', type: 'normal' },
+                { source: 'glue-catalog', target: 'athena', type: 'normal' },
                 { source: 'athena', target: 'grafana', type: 'normal' }
             ];
             
@@ -475,27 +519,20 @@
                     const sourcePhaseIndex = phases.indexOf(sourceNode.phase);
                     const targetPhaseIndex = phases.indexOf(targetNode.phase);
                     
-            // Special handling for specific connections
-                    // 1. Connection from Create Job to S3 Transformed Data
-                    if (d.source === 'create-job' && d.target === 's3-transformed') {
+                    // Handle special cases
+                    if (d.source === 'metadata-lambda' && 
+                        (d.target === 'metadata-flat' || d.target === 'metadata-detailed' || d.target === 'metadata-manifest')) {
+                        // Connect metadata lambda to the three metadata storage options
                         const x1 = sourceNode.x + nodeWidth / 2;
                         const y1 = sourceNode.y + nodeHeight;
                         const x2 = targetNode.x + nodeWidth / 2;
                         const y2 = targetNode.y;
-                        // Create a path that goes from Create Job down, then left, then up to S3 Transformed Data
+                        
+                        // Create a path that goes from Lambda down, then over to the target
                         const verticalOffset = 25;
                         return `M${x1},${y1} V${y1 + verticalOffset} H${x2} V${y2}`;
                     }
-                    // 2. Connection from Publish Job to S3 Production Data
-                    else if (d.source === 'publish-job' && d.target === 's3-prod') {
-                        const x1 = sourceNode.x;
-                        const y1 = sourceNode.y + nodeHeight / 2;
-                        const x2 = targetNode.x + nodeWidth;
-                        const y2 = targetNode.y + nodeHeight / 2;
-                        // Create a path that goes from Publish Job left, then up, then right to S3 Production Data
-                        const horizontalOffset = 50;
-                        return `M${x1},${y1} H${x1 - horizontalOffset} V${y2} H${x2}`;
-                    }
+                    
                     // Default cases
                     let x1, y1, x2, y2;
                     
@@ -587,7 +624,7 @@
                     return d.details;
                 });
                 
-            // Add grid lines (optional - for more technical look)
+            // Add grid lines for visual guidance
             const gridLines = svg.append("g")
                 .attr("class", "grid-lines")
                 .attr("stroke", "#f0f0f0")
