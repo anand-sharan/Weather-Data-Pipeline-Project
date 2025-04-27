@@ -1,0 +1,30 @@
+name: Build and Deploy Presentation
+
+on:
+  push:
+    branches: [ main ]  # or 'master' depending on your default branch
+  workflow_dispatch:    # allows manual triggering
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+
+      - name: Install dependencies
+        run: npm install reveal-md
+
+      - name: Build presentation
+        run: npx reveal-md Weather_Data_Pipeline.md --static _site
+
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@4.1.4
+        with:
+          branch: gh-pages
+          folder: _site
