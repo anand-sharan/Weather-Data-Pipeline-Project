@@ -410,7 +410,7 @@ def get_s3_metadata(bucket_name, prefix):
     return s3_objects
 ```
 
-## 8. Metadata in Grafana
+## Metadata in Grafana
 
 Sample Athena query for metadata visualization:
 ```sql
@@ -466,7 +466,7 @@ SELECT * FROM "weather_metadata_results"."weather_metadata_flat" LIMIT 10;
 
 ![Athena Metadata Query Results Screenshot](pics/athena-results.png)
 
-### 9. Athena Tables
+### Athena Tables
 
 The processed data can be queried using Amazon Athena:
 
@@ -474,7 +474,7 @@ The processed data can be queried using Amazon Athena:
 SELECT * FROM "weather-database-04142025"."open_meteo_weather_data_parquet_tbl" LIMIT 10;
 ```
 
-### 10. Grafana Dashboard
+### Grafana Dashboard
 
 The final data is visualized in a Grafana dashboard showing temperature trends over time.
 
