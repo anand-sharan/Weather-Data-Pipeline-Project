@@ -17,9 +17,9 @@ This project implements an end-to-end data pipeline to collect, process, and vis
     - [d. Publish Job](#d-publish-job)
   - [6. AWS Glue Workflow](#6-aws-glue-workflow)
   - [7. Weather Metadata Extractor](#7-weather-metadata-extractor)
-  - [8. Metadata in Grafana](#metadata-in-grafana)
-  - [9. Athena Tables](#8-athena-tables)
-  - [10. Grafana Dashboard](#9-grafana-dashboard)
+  - [9. Metadata in Grafana](#metadata-in-grafana)
+  - [10. Athena Tables](#8-athena-tables)
+  - [11. Grafana Dashboard](#9-grafana-dashboard)
 - [Key Findings from Weather Data Analysis](#key-findings-from-weather-data-analysis)
 - [Issues and Resolutions](#issues-and-resolutions)
 - [Setup and Configuration](#setup-and-configuration)
@@ -410,7 +410,7 @@ def get_s3_metadata(bucket_name, prefix):
     return s3_objects
 ```
 
-## Metadata in Grafana
+## 8. Metadata in Grafana
 
 Sample Athena query for metadata visualization:
 ```sql
@@ -466,7 +466,7 @@ SELECT * FROM "weather_metadata_results"."weather_metadata_flat" LIMIT 10;
 
 ![Athena Metadata Query Results Screenshot](pics/athena-results.png)
 
-### 8. Athena Tables
+### 9. Athena Tables
 
 The processed data can be queried using Amazon Athena:
 
@@ -474,7 +474,7 @@ The processed data can be queried using Amazon Athena:
 SELECT * FROM "weather-database-04142025"."open_meteo_weather_data_parquet_tbl" LIMIT 10;
 ```
 
-### 9. Grafana Dashboard
+### 10. Grafana Dashboard
 
 The final data is visualized in a Grafana dashboard showing temperature trends over time.
 
