@@ -2,6 +2,31 @@
 
 This project implements an end-to-end data pipeline to collect, process, and visualize historical weather data from the Open Meteo Weather API.
 
+## Table of Contents
+
+- [Architecture Overview](#architecture-overview)
+- [Components](#components)
+  - [1. Lambda Function](#1-lambda-function)
+  - [2. Kinesis Firehose](#2-kinesis-firehose)
+  - [3. S3 Storage](#3-s3-storage)
+  - [4. AWS Glue Crawler](#4-aws-glue-crawler)
+  - [5. AWS Glue Jobs](#5-aws-glue-jobs)
+    - [a. Delete Job](#a-delete-job)
+    - [b. Create Job](#b-create-job)
+    - [c. DQ Checks Job](#c-dq-checks-job)
+    - [d. Publish Job](#d-publish-job)
+  - [6. AWS Glue Workflow](#6-aws-glue-workflow)
+  - [7. Weather Metadata Extractor](#7-weather-metadata-extractor)
+- [Metadata in Grafana](#metadata-in-grafana)
+- [8. Athena Tables](#8-athena-tables)
+- [9. Grafana Dashboard](#9-grafana-dashboard)
+- [Key Findings from Weather Data Analysis](#key-findings-from-weather-data-analysis)
+- [Issues and Resolutions](#issues-and-resolutions)
+- [Setup and Configuration](#setup-and-configuration)
+- [Dependencies](#dependencies)
+- [Further Improvements](#further-improvements)
+
+
 ## Architecture Overview
 
 The pipeline consists of the following components:
